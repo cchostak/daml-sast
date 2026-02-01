@@ -4,7 +4,7 @@ BIN := $(VENV)/bin
 PIP := $(BIN)/pip
 PYTHON := $(BIN)/python
 
-.PHONY: help venv deps dev-deps test lint typecheck build clean
+.PHONY: help venv deps dev-deps test lint typecheck build dar-tests clean
 
 help:
 	@echo "Targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  lint      - run ruff lint"
 	@echo "  typecheck - run mypy"
 	@echo "  build     - build wheel"
+	@echo "  dar-tests - scan DARs under testdata/external/dars (use DAR_GLOB=... to filter)"
 	@echo "  clean     - remove virtual environment"
 
 venv:
@@ -44,6 +45,37 @@ typecheck: dev-deps
 
 build: dev-deps
 	$(PYTHON) -m build --wheel
+
+DAR_DIR ?= testdata/external/dars
+DAR_GLOB ?= $(DAR_DIR)/*.dar
+DAR_IGNORE_ERRORS ?= 0
+
+dar-tests: deps
+	@test -d $(DAR_DIR) || (echo "missing $(DAR_DIR); download DARs first" && exit 1)
+	@set -e; \
+	errors=0; \
+	found=0; \
+	for dar in $(DAR_GLOB); do \
+		if [ ! -e "$$dar" ]; then \
+			continue; \
+		fi; \
+		found=1; \
+		echo "scanning $$dar"; \
+		if ! $(PYTHON) -m daml_sast.cli scan --dar "$$dar" --format json > /dev/null; then \
+			echo "scan failed: $$dar"; \
+			errors=$$((errors+1)); \
+		fi; \
+	done; \
+	if [ "$$found" -eq 0 ]; then \
+		echo "no .dar files found for $(DAR_GLOB)"; \
+		exit 1; \
+	fi; \
+	if [ "$$errors" -gt 0 ]; then \
+		echo "$$errors DAR(s) failed"; \
+		if [ "$(DAR_IGNORE_ERRORS)" != "1" ]; then \
+			exit 1; \
+		fi; \
+	fi
 
 clean:
 	rm -rf $(VENV)

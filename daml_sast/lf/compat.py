@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,6 +22,7 @@ class LfVersion:
 # Supported language versions. Update intentionally and keep tests in sync.
 SUPPORTED_VERSIONS: set[str] = {
     # LF1
+    "1.6",
     "1.7",
     "1.8",
     "1.11",

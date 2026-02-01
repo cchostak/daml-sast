@@ -16,3 +16,5 @@ build/
 .vscode/
 .env
 *.log
+testdata/external/
+canton-open-source-2.10.3

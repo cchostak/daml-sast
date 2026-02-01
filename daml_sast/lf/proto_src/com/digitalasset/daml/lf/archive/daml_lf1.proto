@@ -1,8 +1,5 @@
-// Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// Copyright (c) 2024 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-// taken from main-2.x as of April 4th 2024.
-// https://github.com/digital-asset/daml/commit/5f6bd1d0fe2696453c537a0a6db7054b5d274f23
 
 // .proto representation of the first version of the Daml-LF language,
 // as specified by
@@ -52,15 +49,13 @@
 // * 13 -- 2021-04-06: Add BigNumeric
 // * 14 -- 2021-03-06: Add Exception
 // * 15 -- 2022-06-18: Add Interfaces
-// * 16 -- 2024-08-13: **Declared broken**
-// * 17 -- 2024-08-13: Upgrade support
 // * dev (special staging area for the next version to be released)
 
 syntax = "proto3";
 package daml_lf_1;
 
-option java_package = "com.digitalasset.daml.lf.archive";
-option csharp_namespace = "Com.Digitalasset.Daml.Lf.Archive.DamlLf1";
+option java_package = "com.daml.daml_lf_dev";
+option csharp_namespace = "Com.Daml.Daml_Lf_Dev.DamlLf1";
 
 // Canonical encoding in one-ofs for cases that carry no meaningful
 // values.
@@ -1396,7 +1391,7 @@ message Update {
     Expr arg = 4;
 
     // exercise guard (Interface -> Bool)
-    Expr guard = 5;  // *optional*  *Available in versions >= 1.17*
+    Expr guard = 5;  // *optional*  *Available in versions >= 1.16*
   }
 
  // ExerciseByKey Update

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from typing import Any
@@ -562,18 +564,18 @@ def _lower_expr_lf1(
         fields = [
             Expr(
                 kind="field",
-                value=_lf1_field_name(f.field, resolver),
+                value=_lf1_field_name(f, resolver),
                 children=[_lower_expr_lf1(f.expr, resolver, env, module_name, package_id)],
             )
             for f in expr.rec_con.fields
         ]
         return Expr(kind="record", value=_lf1_typecon_name(expr.rec_con.tycon, resolver), children=fields, location=location)
     if which == "rec_proj":
-        field = _lf1_field_name(expr.rec_proj.field, resolver)
+        field = _lf1_field_name(expr.rec_proj, resolver)
         record = _lower_expr_lf1(expr.rec_proj.record, resolver, env, module_name, package_id)
         return Expr(kind="record_proj", value=field, children=[record], location=location)
     if which == "rec_upd":
-        field = _lf1_field_name(expr.rec_upd.field, resolver)
+        field = _lf1_field_name(expr.rec_upd, resolver)
         record = _lower_expr_lf1(expr.rec_upd.record, resolver, env, module_name, package_id)
         update = _lower_expr_lf1(expr.rec_upd.update, resolver, env, module_name, package_id)
         return Expr(kind="record_upd", value=field, children=[record, update], location=location)
@@ -589,18 +591,18 @@ def _lower_expr_lf1(
         fields = [
             Expr(
                 kind="field",
-                value=_lf1_struct_field_name(f.field, resolver),
+                value=_lf1_struct_field_name(f, resolver),
                 children=[_lower_expr_lf1(f.expr, resolver, env, module_name, package_id)],
             )
             for f in expr.struct_con.fields
         ]
         return Expr(kind="struct", children=fields, location=location)
     if which == "struct_proj":
-        field = _lf1_struct_field_name(expr.struct_proj.field, resolver)
+        field = _lf1_struct_field_name(expr.struct_proj, resolver)
         struct = _lower_expr_lf1(expr.struct_proj.struct, resolver, env, module_name, package_id)
         return Expr(kind="struct_proj", value=field, children=[struct], location=location)
     if which == "struct_upd":
-        field = _lf1_struct_field_name(expr.struct_upd.field, resolver)
+        field = _lf1_struct_field_name(expr.struct_upd, resolver)
         struct = _lower_expr_lf1(expr.struct_upd.struct, resolver, env, module_name, package_id)
         update = _lower_expr_lf1(expr.struct_upd.update, resolver, env, module_name, package_id)
         return Expr(kind="struct_upd", value=field, children=[struct, update], location=location)
@@ -1459,10 +1461,20 @@ def _lf2_typecon_name(tycon: daml_lf2_pb2.TypeConId | daml_lf2_pb2.Type.Con, res
 
 
 def _lf1_choice_name(ex: Any, resolver: Lf1Resolver) -> str:
-    which = ex.WhichOneof("choice")
+    which = None
+    try:
+        which = ex.WhichOneof("choice")
+    except ValueError:
+        which = None
     if which == "choice_str":
         return ex.choice_str
-    return resolver.interned_str(ex.choice_interned_str)
+    if which == "choice_interned_str":
+        return resolver.interned_str(ex.choice_interned_str)
+    if getattr(ex, "choice_str", ""):
+        return ex.choice_str
+    if hasattr(ex, "choice_interned_str"):
+        return resolver.interned_str(ex.choice_interned_str)
+    return "<choice>"
 
 
 def _lf1_field_name(field_msg: Any, resolver: Lf1Resolver) -> str:

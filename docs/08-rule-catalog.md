@@ -1,6 +1,6 @@
 # Rule Catalog
 
-This catalog documents the current MVP rules. It focuses on what the rule checks, why it matters, example triggers, and expected false positives.
+This catalog documents the current MVP rules. It focuses on what the rule checks, why it matters, example triggers, and explicit false positive guidance.
 
 ## DAML-AUTH-001 — Controller Not Aligned With Signatories
 
@@ -22,9 +22,9 @@ template TAuth
   choice Transfer controller [Bob] = ...
 ```
 
-Expected false positives:
-- Deliberate delegation patterns (e.g., a designated operator acts on behalf of signatories).
-- Controllers inferred from simple logic not captured by the current inference (will be "unknown" and not flagged).
+False positive guidance:
+- If delegation is intentional, document the delegation model and suppress via baseline.
+- If controllers come from complex logic, confirm in source and consider refining inference.
 
 ---
 
@@ -47,8 +47,8 @@ choice Mint (nonconsuming) = do
   create this
 ```
 
-Expected false positives:
-- Intentional mint/burn patterns that deliberately duplicate or roll forward assets.
+False positive guidance:
+- If mint/burn is intentional, document asset lifecycle assumptions and suppress via baseline.
 
 ---
 
@@ -69,9 +69,9 @@ Example trigger (pseudo):
 observers = parties  -- parties : List Party
 ```
 
-Expected false positives:
-- Legitimate broadcast-style contracts (e.g., public announcements).
-- Observers list already pre-filtered in prior logic (not visible to the analyzer).
+False positive guidance:
+- If broadcast disclosure is intended, document the disclosure model and suppress via baseline.
+- If observers are pre-filtered outside the analyzer view, confirm in source and suppress.
 
 ---
 
@@ -93,8 +93,8 @@ key (k) maintainer [Bob]
 signatory [Alice]
 ```
 
-Expected false positives:
-- Cases where maintainers are intentionally a broader operational group.
+False positive guidance:
+- If maintainers are broader by design, document key lookup policy and suppress via baseline.
 
 ---
 
@@ -116,6 +116,6 @@ Example trigger (pseudo):
 signatory if getTime < deadline then [Alice] else []
 ```
 
-Expected false positives:
-- Legitimate time-window authorization patterns.
-- References to ledger time in non-auth logic that happen to flow into these expressions.
+False positive guidance:
+- If time windows are intended, document the policy and replay assumptions before suppressing.
+- If time appears in non-auth logic, confirm dataflow in source and suppress.

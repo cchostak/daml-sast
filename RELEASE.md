@@ -18,6 +18,10 @@
    - `git tag -a vX.Y.Z -m "vX.Y.Z"`
    - `git push --tags`
 
-5) Publish wheel:
-   - `python -m build --wheel`
-   - `twine upload dist/*.whl`
+5) Publish (GitHub Actions):
+   - Create a GitHub release for the tag.
+   - The `publish` workflow runs lint/typecheck/tests before building and uploading to PyPI.
+
+Optional signing:
+   - Add `GPG_PRIVATE_KEY` and (optionally) `GPG_PASSPHRASE` secrets.
+   - The publish workflow will generate `.asc` signatures and upload them alongside artifacts.

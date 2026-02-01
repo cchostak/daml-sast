@@ -9,3 +9,4 @@
 - `07-todo.md` — Future enhancements
 - `08-rule-catalog.md` — Rule catalog with rationale/examples/false positives
 - `09-interpret-findings.md` — How to interpret findings
+- `10-telemetry-privacy.md` — Telemetry and privacy statement

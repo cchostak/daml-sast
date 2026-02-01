@@ -36,6 +36,7 @@ Use baselines to suppress known/accepted findings in CI.
 - Apply: `daml-sast scan --baseline baseline.json`.
 
 Baselines should be reviewed periodically to ensure they still match intended logic.
+Baselines are versioned by tool + ruleset; mismatches are rejected to avoid suppressing stale findings.
 
 ## Known Limitations
 
