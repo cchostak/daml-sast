@@ -1,0 +1,2 @@
+recursive-include daml_sast/lf/proto_src *.proto VERSION
+recursive-include daml_sast/lf/proto *.py
