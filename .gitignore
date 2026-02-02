@@ -16,5 +16,7 @@ build/
 .vscode/
 .env
 *.log
-testdata/external/
-canton-open-source-2.10.3
+# DAR fixtures; keep manifest tracked
+testdata/external/*
+!testdata/external/
+!testdata/external/dars.manifest

@@ -121,6 +121,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     scan.add_argument("--baseline", help="Path to baseline JSON to suppress findings")
     scan.add_argument("--write-baseline", help="Write baseline JSON to path")
     scan.add_argument("--ci", action="store_true", help="Emit CI-oriented metadata")
+    scan.add_argument("--suppressions", help="Path to suppression file (default: .daml-sast-ignore)")
 
     return parser.parse_args(argv)
 
@@ -149,6 +150,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ci = args.ci if args.ci else bool(cfg.ci) if cfg and cfg.ci is not None else False
     baseline_path = args.baseline or (cfg.baseline if cfg else None)
     write_baseline_path = args.write_baseline or (cfg.write_baseline if cfg else None)
+    suppressions_path = args.suppressions or (cfg.suppressions if cfg else None) or ".daml-sast-ignore"
     if ci and fail_on is None:
         fail_on = Severity.MEDIUM
 
@@ -167,6 +169,11 @@ def main(argv: Iterable[str] | None = None) -> int:
         write_baseline(write_baseline_path, all_fingerprints)
 
     findings = _filter_by_severity(findings, min_sev)
+    from daml_sast.suppress import apply_suppressions, load_suppressions
+
+    suppressions = load_suppressions(suppressions_path)
+    if suppressions:
+        findings = apply_suppressions(findings, suppressions)
     if baseline_path:
         try:
             suppressed = load_baseline(baseline_path)

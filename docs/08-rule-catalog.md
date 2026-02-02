@@ -1,121 +1,57 @@
 # Rule Catalog
 
-This catalog documents the current MVP rules. It focuses on what the rule checks, why it matters, example triggers, and explicit false positive guidance.
+This catalog documents the current rules: what they check, why they matter, sample triggers, and false-positive guidance.
 
-## DAML-AUTH-001 — Controller Not Aligned With Signatories
+## DAML-AUTH-001 - Controller not aligned with signatories
+- Category: auth | Severity: MEDIUM | Confidence: MEDIUM
+- Checks: controllers not subset of signatories/maintainers.
+- Trigger: `choice Transfer controller [Bob]` on a template signed by `[Alice]`.
+- Guidance: If delegation is intentional, document it; otherwise align controllers or suppress.
 
-- Category: auth
-- Severity: MEDIUM
-- Confidence: MEDIUM
+## DAML-AUTH-002 - Controllers from uncontrolled data
+- Category: auth | Severity: MEDIUM | Confidence: LOW
+- Checks: controllers expression cannot be tied to known parties (unknown party set).
+- Trigger: controllers derived from a choice argument or unknown variable.
+- Guidance: Validate/whitelist controllers; suppress if forwarding is intentional.
 
-What it checks:
-- Choice controllers are not a subset of template signatories or key maintainers.
-- Uses party-set inference (literal parties, simple `let` bindings, list construction).
+## DAML-AUTH-003 - Template has no signatories
+- Category: auth | Severity: HIGH | Confidence: MEDIUM
+- Checks: signatories expression resolves to an empty set.
+- Trigger: `signatory []`.
+- Guidance: Add signatories or justify openness; otherwise suppress intentionally.
 
-Rationale:
-- Controllers who are not signatories/maintainers can exercise choices without the expected authorization boundary.
+## DAML-AUTH-004 - Nonconsuming forwarding via exercise
+- Category: auth | Severity: MEDIUM | Confidence: LOW
+- Checks: nonconsuming choice that only exercises another choice (forwarding) without guards.
+- Trigger: nonconsuming choice that calls `exercise`/`exercise_by_key` etc. directly.
+- Guidance: Add guards/authorization checks; suppress if deliberate proxying.
 
-Example trigger (pseudo):
-```text
-template TAuth
-  signatory [Alice]
-  choice Transfer controller [Bob] = ...
-```
+## DAML-LIFE-001 - Nonconsuming choice creates same template
+- Category: lifecycle | Severity: HIGH | Confidence: MEDIUM
+- Checks: nonconsuming choice `create` of its own template.
+- Trigger: `create this` inside nonconsuming choice.
+- Guidance: Document intended minting; otherwise make choice consuming or remove create.
 
-False positive guidance:
-- If delegation is intentional, document the delegation model and suppress via baseline.
-- If controllers come from complex logic, confirm in source and consider refining inference.
+## DAML-LIFE-002 - Nonconsuming choice creates any contract
+- Category: lifecycle | Severity: MEDIUM | Confidence: MEDIUM
+- Checks: nonconsuming choice creates another template (not just self).
+- Trigger: nonconsuming choice that `create` another template.
+- Guidance: Ensure lifecycle is intended; otherwise make consuming or gate creation.
 
----
+## DAML-PRIV-001 - Over-broad observers
+- Category: privacy | Severity: MEDIUM | Confidence: LOW
+- Checks: observers taken directly from a party-list variable.
+- Trigger: `observers = parties` where `parties : List Party`.
+- Guidance: Filter observers or justify broadcast; suppress if intentional.
 
-## DAML-LIFE-001 — Nonconsuming Choice Creates New Contract
+## DAML-KEY-001 - Key maintainers not aligned with signatories
+- Category: key | Severity: MEDIUM | Confidence: MEDIUM
+- Checks: key maintainers not subset of signatories.
+- Trigger: `key (...) maintainer [Bob]; signatory [Alice]`.
+- Guidance: Align maintainers or document the policy; suppress if intentional.
 
-- Category: lifecycle
-- Severity: HIGH
-- Confidence: MEDIUM
-
-What it checks:
-- Nonconsuming choice whose update contains `create` of the same template.
-- Uses update-op extraction from LF update nodes.
-
-Rationale:
-- Nonconsuming choices that create new contracts can accidentally mint/duplicate assets.
-
-Example trigger (pseudo):
-```text
-choice Mint (nonconsuming) = do
-  create this
-```
-
-False positive guidance:
-- If mint/burn is intentional, document asset lifecycle assumptions and suppress via baseline.
-
----
-
-## DAML-PRIV-001 — Over-broad Observers
-
-- Category: privacy
-- Severity: MEDIUM
-- Confidence: LOW
-
-What it checks:
-- Observers derived directly from an unfiltered `List Party` variable.
-
-Rationale:
-- Over-broad observers can cause unintended divulgence.
-
-Example trigger (pseudo):
-```text
-observers = parties  -- parties : List Party
-```
-
-False positive guidance:
-- If broadcast disclosure is intended, document the disclosure model and suppress via baseline.
-- If observers are pre-filtered outside the analyzer view, confirm in source and suppress.
-
----
-
-## DAML-KEY-001 — Key Maintainers Not Aligned With Signatories
-
-- Category: key
-- Severity: MEDIUM
-- Confidence: MEDIUM
-
-What it checks:
-- Key maintainers are not a subset of signatories.
-
-Rationale:
-- Misaligned maintainers can enable unexpected key lookups or disclosure.
-
-Example trigger (pseudo):
-```text
-key (k) maintainer [Bob]
-signatory [Alice]
-```
-
-False positive guidance:
-- If maintainers are broader by design, document key lookup policy and suppress via baseline.
-
----
-
-## DAML-DET-001 — Ledger Time Used in Authorization/Key Logic
-
-- Category: determinism
-- Severity: LOW
-- Confidence: LOW
-
-What it checks:
-- Ledger time references in signatories, observers, controllers, or key logic.
-- Uses update-op extraction (`get_time`) and builtin checks.
-
-Rationale:
-- Time-dependent authorization or key logic can be brittle and replay-sensitive.
-
-Example trigger (pseudo):
-```text
-signatory if getTime < deadline then [Alice] else []
-```
-
-False positive guidance:
-- If time windows are intended, document the policy and replay assumptions before suppressing.
-- If time appears in non-auth logic, confirm dataflow in source and suppress.
+## DAML-DET-001 - Ledger time in auth/key logic
+- Category: determinism | Severity: LOW | Confidence: LOW
+- Checks: `getTime` in signatories/observers/controllers/key logic.
+- Trigger: `signatory if getTime < deadline then [Alice] else []`.
+- Guidance: Confirm time window is intended; otherwise refactor or suppress.

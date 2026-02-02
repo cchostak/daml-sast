@@ -7,17 +7,25 @@ from typing import Iterable
 from daml_sast.rules.base import Rule
 from daml_sast.rules.examples import (
     AuthControllerAlignmentRule,
+    EmptySignatoriesRule,
     DeterminismTimeRule,
     KeyMaintainersAlignmentRule,
+    NonconsumingCreateAnyRule,
     NonconsumingCreateRule,
     OverbroadObserversRule,
+    UncheckedForwardExerciseRule,
+    UncontrolledControllersRule,
 )
 
 
 def registry() -> list[Rule]:
     return [
         AuthControllerAlignmentRule(),
+        UncontrolledControllersRule(),
+        EmptySignatoriesRule(),
         NonconsumingCreateRule(),
+        NonconsumingCreateAnyRule(),
+        UncheckedForwardExerciseRule(),
         OverbroadObserversRule(),
         KeyMaintainersAlignmentRule(),
         DeterminismTimeRule(),

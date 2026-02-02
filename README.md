@@ -8,7 +8,7 @@ Bandit-like static analyzer for Daml-LF (DAR/DALF) artifacts.
 
 - Scan DAR/DALF archives for a focused set of security and stability rules.
 - Emit JSON or SARIF for CI integration and code review.
-- Suppress known findings via versioned baselines.
+- Suppress known findings via versioned baselines or per-finding suppressions.
 
 ## What this can't do
 
@@ -17,8 +17,6 @@ Bandit-like static analyzer for Daml-LF (DAR/DALF) artifacts.
 - Fully understand complex party logic beyond simple inference patterns.
 
 ## Supported Daml-LF versions
-
-The scanner enforces an explicit support matrix:
 
 - LF1: 1.6, 1.7, 1.8, 1.11, 1.14, 1.15, 1.17
 - LF2: 2.1
@@ -29,6 +27,37 @@ The scanner enforces an explicit support matrix:
 - Party inference is conservative; complex logic can yield unknowns.
 - Rules are heuristic and may produce false positives or miss nuanced cases.
 - Large or malformed DARs are rejected once input hardening limits are exceeded.
+
+## Test fixtures (DARs)
+
+`make dar-tests` expects sample DAR archives under `testdata/external/dars`.
+
+```
+make fetch-dars
+```
+
+The fetcher reads URLs from `testdata/external/dars.manifest` (one per line, optionally with filename and sha256). You can also bypass the manifest by passing `DAR_SOURCES="https://example.com/foo.dar ..."`.
+
+## Semgrep parity (Solidity-inspired)
+
+We track only the rules that make sense for Daml/LF (no EVM opcodes/gas). Summary:
+
+- DAML-AUTH-001 - controllers not subset of signatories/maintainers
+- DAML-AUTH-002 - controllers from uncontrolled data
+- DAML-AUTH-003 - template with empty signatories
+- DAML-AUTH-004 - nonconsuming forwarding via exercise
+- DAML-KEY-001 - key maintainers not subset of signatories
+- DAML-PRIV-001 - over-broad observers
+- DAML-LIFE-001 - nonconsuming creates same template
+- DAML-LIFE-002 - nonconsuming creates any contract
+- DAML-DET-001 - time in auth/key logic
+
+See `docs/semgrep-parity.md` for the mapping table and N/A items.
+
+## Suppressions
+
+- Suppression file (default: `.daml-sast-ignore`): each line `RULE [module] [definition] [fingerprint]`, `*` globs allowed.
+- Baseline JSON: `--baseline` to suppress existing fingerprints; `--write-baseline` to regenerate.
 
 ## Telemetry and privacy
 
@@ -110,23 +139,20 @@ Mismatched versions are rejected to avoid suppressing stale findings; regenerate
 
 Pass `--ci` to add SARIF run metadata (invocation timestamps, automation details) and default `--fail-on` to `MEDIUM` if not set.
 
-## Packaging
-
-- Runtime pins: `requirements.txt`
-- Dev pins (lint/typecheck/build): `requirements-dev.txt`
-- Build wheel: `make build`
-
 ## Docs
 
-- `docs/README.md` — Index
-- `docs/08-rule-catalog.md` — Rule catalog
-- `docs/09-interpret-findings.md` — How to interpret findings
-- `docs/10-telemetry-privacy.md` — Telemetry and privacy statement
+- `docs/README.md` - Index
+- `docs/08-rule-catalog.md` - Rule catalog
+- `docs/09-interpret-findings.md` - How to interpret findings
+- `docs/10-telemetry-privacy.md` - Telemetry and privacy statement
+- `docs/semgrep-parity.md` - Solidity-inspired rule parity
+- `docs/terms.md` - Glossary (plain language)
+- `docs/ci-examples.md` - Docker + CI snippets (GitHub Actions, GitLab CI)
 
 ## Contributing and security
 
-- `CONTRIBUTING.md` — Contribution guide
-- `SECURITY.md` — Security policy
+- `CONTRIBUTING.md` - Contribution guide
+- `SECURITY.md` - Security policy
 
 ## License
 

@@ -7,6 +7,10 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+import sys
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / "scripts"))
+import gen_sample_dars as gsd  # type: ignore
 
 from daml_sast.engine.runner import run
 from daml_sast.lf.loader import load_program_from_dar
@@ -36,6 +40,50 @@ class RuleDalfTests(unittest.TestCase):
             findings = run(registry(), program)
 
         self.assertEqual([], findings)
+
+    def test_uncontrolled_controllers_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dar_path = Path(tmp) / "uncontrolled.dar"
+            archive = gsd._archive_from_package(gsd.build_pkg_uncontrolled_controllers())
+            gsd._write_zip(dar_path, "uncontrolled.dalf", archive)
+
+            program = load_program_from_dar(str(dar_path))
+            ids = {f.id for f in run(registry(), program)}
+
+        self.assertIn("DAML-AUTH-002", ids)
+
+    def test_empty_signatories_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dar_path = Path(tmp) / "empty-sigs.dar"
+            archive = gsd._archive_from_package(gsd.build_pkg_empty_signatories())
+            gsd._write_zip(dar_path, "empty-sigs.dalf", archive)
+
+            program = load_program_from_dar(str(dar_path))
+            ids = {f.id for f in run(registry(), program)}
+
+        self.assertIn("DAML-AUTH-003", ids)
+
+    def test_nonconsuming_create_any_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dar_path = Path(tmp) / "create-any.dar"
+            archive = gsd._archive_from_package(gsd.build_pkg_create_other())
+            gsd._write_zip(dar_path, "create-any.dalf", archive)
+
+            program = load_program_from_dar(str(dar_path))
+            ids = {f.id for f in run(registry(), program)}
+
+        self.assertIn("DAML-LIFE-002", ids)
+
+    def test_forward_exercise_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dar_path = Path(tmp) / "forward-exercise.dar"
+            archive = gsd._archive_from_package(gsd.build_pkg_forward_exercise())
+            gsd._write_zip(dar_path, "forward-exercise.dalf", archive)
+
+            program = load_program_from_dar(str(dar_path))
+            ids = {f.id for f in run(registry(), program)}
+
+        self.assertIn("DAML-AUTH-004", ids)
 
 
 # --- Helpers to build a minimal LF1 DAR with rule triggers ---

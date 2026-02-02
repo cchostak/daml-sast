@@ -1,10 +1,20 @@
-PY ?= python3
 VENV ?= .venv
-BIN := $(VENV)/bin
-PIP := $(BIN)/pip
-PYTHON := $(BIN)/python
 
-.PHONY: help venv deps dev-deps test lint typecheck build dar-tests clean
+# Pick correct venv binary locations per-platform
+ifeq ($(OS),Windows_NT)
+DEFAULT_PY := python
+BIN := $(VENV)\\Scripts
+PYTHON := $(BIN)\\python.exe
+else
+DEFAULT_PY := python3
+BIN := $(VENV)/bin
+PYTHON := $(BIN)/python
+endif
+
+PY ?= $(DEFAULT_PY)
+PIP := $(PYTHON) -m pip
+
+.PHONY: help venv deps dev-deps test lint typecheck build dar-tests fetch-dars clean
 
 help:
 	@echo "Targets:"
@@ -16,10 +26,17 @@ help:
 	@echo "  typecheck - run mypy"
 	@echo "  build     - build wheel"
 	@echo "  dar-tests - scan DARs under testdata/external/dars (use DAR_GLOB=... to filter)"
+	@echo "  fetch-dars- download DAR fixtures into $(DAR_DIR) (edit $(DAR_MANIFEST) or pass DAR_SOURCES=...)"
 	@echo "  clean     - remove virtual environment"
 
 venv:
-	@test -x $(PYTHON) || $(PY) -m venv $(VENV)
+ifeq ($(OS),Windows_NT)
+	@if not exist "$(PYTHON)" ( $(PY) -m venv $(VENV) )
+	@$(PYTHON) -m ensurepip --upgrade >NUL
+else
+	@test -x "$(PYTHON)" || $(PY) -m venv $(VENV)
+	@$(PYTHON) -m ensurepip --upgrade >/dev/null
+endif
 
 # Runtime deps only
 deps: venv
@@ -49,33 +66,15 @@ build: dev-deps
 DAR_DIR ?= testdata/external/dars
 DAR_GLOB ?= $(DAR_DIR)/*.dar
 DAR_IGNORE_ERRORS ?= 0
+DAR_MANIFEST ?= testdata/external/dars.manifest
+DAR_SOURCES ?=
+
+fetch-dars: venv
+	@$(PYTHON) scripts/gen_sample_dars.py --out "$(DAR_DIR)"
+	@$(PYTHON) scripts/fetch_dars.py --dir "$(DAR_DIR)" --manifest "$(DAR_MANIFEST)" --urls "$(DAR_SOURCES)"
 
 dar-tests: deps
-	@test -d $(DAR_DIR) || (echo "missing $(DAR_DIR); download DARs first" && exit 1)
-	@set -e; \
-	errors=0; \
-	found=0; \
-	for dar in $(DAR_GLOB); do \
-		if [ ! -e "$$dar" ]; then \
-			continue; \
-		fi; \
-		found=1; \
-		echo "scanning $$dar"; \
-		if ! $(PYTHON) -m daml_sast.cli scan --dar "$$dar" --format json > /dev/null; then \
-			echo "scan failed: $$dar"; \
-			errors=$$((errors+1)); \
-		fi; \
-	done; \
-	if [ "$$found" -eq 0 ]; then \
-		echo "no .dar files found for $(DAR_GLOB)"; \
-		exit 1; \
-	fi; \
-	if [ "$$errors" -gt 0 ]; then \
-		echo "$$errors DAR(s) failed"; \
-		if [ "$(DAR_IGNORE_ERRORS)" != "1" ]; then \
-			exit 1; \
-		fi; \
-	fi
+	@$(PYTHON) scripts/dar_tests.py "$(DAR_GLOB)" "$(DAR_DIR)" "$(DAR_IGNORE_ERRORS)"
 
 clean:
-	rm -rf $(VENV)
+	$(PY) -c "import shutil, pathlib; shutil.rmtree(r'$(VENV)', ignore_errors=True)"

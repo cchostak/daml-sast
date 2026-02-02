@@ -1,0 +1,14 @@
+# Add DAR download URLs here, one per line, optionally with filename and sha256
+# Lines are: <url|path> [filename] [sha256]
+#
+# Working examples (generated locally by `make fetch-dars`):
+local:testdata/minimal.dar minimal-local.dar
+local:testdata/external/dars/sample-findings.dar sample-findings.dar
+local:testdata/external/dars/sample-clean.dar sample-clean.dar
+local:testdata/external/dars/sample-uncontrolled.dar sample-uncontrolled.dar
+local:testdata/external/dars/sample-empty-sigs.dar sample-empty-sigs.dar
+local:testdata/external/dars/sample-create-any.dar sample-create-any.dar
+local:testdata/external/dars/sample-forward-exercise.dar sample-forward-exercise.dar
+#
+# Add your own remote DARs below, e.g.:
+# https://example.com/path/to/sample.dar sample.dar

@@ -24,6 +24,7 @@ class Config:
     write_baseline: str | None = None
     fmt: str | None = None
     ci: bool | None = None
+    suppressions: str | None = None
 
 
 def load_config(path: str | None) -> Config | None:
@@ -50,6 +51,7 @@ def load_config(path: str | None) -> Config | None:
         write_baseline=write_path,
         fmt=scanner.get("format"),
         ci=_parse_bool(scanner.get("ci")),
+        suppressions=data.get("suppressions"),
     )
 
 
