@@ -148,6 +148,7 @@ Pass `--ci` to add SARIF run metadata (invocation timestamps, automation details
 - `docs/semgrep-parity.md` - Solidity-inspired rule parity
 - `docs/terms.md` - Glossary (plain language)
 - `docs/ci-examples.md` - Docker + CI snippets (GitHub Actions, GitLab CI)
+- `docs/getting-started-project.md` - How to scan a Daml project with --project
 
 ## Contributing and security
 

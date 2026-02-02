@@ -51,8 +51,8 @@ dev-deps: venv
 	$(PIP) install -e .
 
 
-test: deps
-	$(PYTHON) -m unittest discover -s tests -p "test_*.py"
+test: dev-deps
+	$(PYTHON) -m pytest tests
 
 lint: dev-deps
 	$(PYTHON) -m ruff check .
